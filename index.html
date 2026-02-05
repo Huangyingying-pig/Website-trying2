@@ -1,0 +1,502 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  ArrowDown, Smartphone, Users, Zap, BarChart, Target, Share2, 
+  Layers, Cpu, Activity, ArrowRight, Aperture, ExternalLink, TrendingUp,
+  MessageSquare, Camera, Globe, ShieldCheck, ZapOff
+} from 'lucide-react';
+
+/**
+ * ------------------------------------------------------------------
+ * 核心数据配置区
+ * ------------------------------------------------------------------
+ */
+const MARKET_DATA = {
+  size: [
+    { year: '2021', value: 3.29, label: '3.29亿部' },
+    { year: '2022', value: 2.86, label: '2.86亿部' },
+    { year: '2023', value: 2.71, label: '2.71亿部' },
+    { year: '2024E', value: 2.85, label: '回暖预期' },
+  ],
+  trends: [
+    { title: "存量换机", desc: "换机周期延长至30个月+", icon: <Activity size={20} /> },
+    { title: "高端突破", desc: "600美元+市场占比提升", icon: <Layers size={20} /> },
+    { title: "AI重构", desc: "端侧大模型成为标配", icon: <Cpu size={20} /> },
+  ],
+  competitors: [
+    { 
+      name: "vivo", 
+      tag: "科技人文 / 均衡王者", 
+      strategy: "【核心】自研蓝晶/蓝图影像 + 蓝心大模型。深耕影像与OS（BlueOS）自研，主打高端稳健增长。",
+      power: 92,
+      color: "bg-blue-500" 
+    },
+    { 
+      name: "Huawei", 
+      tag: "麒麟回归 / 品牌势能", 
+      strategy: "【核心】Mate/Pura系列强势回归。主打国产化闭环、卫星通信及鸿蒙生态的深度垂直整合。",
+      power: 95,
+      color: "bg-red-500" 
+    },
+    { 
+      name: "Xiaomi", 
+      tag: "人车家全生态", 
+      strategy: "【核心】HyperOS 跨端互联。借小米汽车势能，绑定徕卡影像，由'性价比'向'质感高端'转型。",
+      power: 88,
+      color: "bg-orange-500" 
+    },
+    { 
+      name: "OPPO", 
+      tag: "影像专家 / AI普及", 
+      strategy: "【核心】Find/Reno双旗舰发力。强调AI手机概念普及与哈苏影像色彩，注重一二线城市渠道渗透。",
+      power: 86,
+      color: "bg-emerald-500" 
+    }
+  ],
+  personas: [
+    { title: "影像创作者", tag: "人文之悦", desc: "关注色彩科学，追求拍出'有故事'的照片。vivo X系列核心人群。", color: "from-blue-500 to-cyan-400" },
+    { title: "商务精英", tag: "高效折叠", desc: "追求极致隐私安全与移动办公效率。X Fold系列目标。", color: "from-purple-500 to-indigo-400" },
+    { title: "性能极客", tag: "电竞体验", desc: "对帧率、散热敏感，iQOO主要覆盖群体。", color: "from-yellow-400 to-orange-500" },
+  ]
+};
+
+const BRAND_CASES = [
+  {
+    title: "vivo S19: 西湖东方美学 CGI",
+    brand: "vivo",
+    type: "own",
+    category: "视觉美学 / 科技国潮",
+    insight: "【视觉叙事】借势'新中式'热潮，利用CGI技术将产品融入西湖十景。这不只是展示手机，更是用科技演绎传统文化，在Z世代心中建立'人文之悦'的审美心智。",
+    icon: <Aperture />,
+    link: "https://www.digitaling.com/articles/1221611.html"
+  },
+  {
+    title: "豆包 x 努比亚: AI硬件破局",
+    brand: "Industry Analysis",
+    type: "competitor",
+    category: "AI 原生 / 跨界营销",
+    insight: "【差异化突围】不仅是硬件，更是'AI Agent'的叙事胜利。通过GUI Agent打破APP围墙。启示：vivo BlueLM 除了技术，也需要一个'打破规则'的故事。",
+    icon: <Cpu />,
+    link: "https://www.digitaling.com/articles/1437603.html"
+  },
+  {
+    title: "小折叠屏: 撕掉'花瓶'标签",
+    brand: "Trend Insight",
+    type: "trend",
+    category: "品类洞察 / 用户心智",
+    insight: "【品类进化】从'美丽小废物'到'主力机'的跨越。关键在于外屏生态实用化与悬停拍摄，满足了用户'既要颜值又要实力'的心理。",
+    icon: <TrendingUp />,
+    link: "https://www.digitaling.com/articles/1064776.html"
+  },
+  {
+    title: "Redmi: 连续剧式广告",
+    brand: "Competitor",
+    type: "competitor",
+    category: "剧情内容 / 粉丝经济",
+    insight: "【内容策略】竞品Redmi通过'职场反转剧'，将生硬的卖点转化为推动剧情的爽点。这是一种'广告即内容'的高级打法，值得年轻线参考。",
+    icon: <MessageSquare />,
+    link: "https://www.digitaling.com/articles/986502.html"
+  }
+];
+
+/**
+ * ------------------------------------------------------------------
+ * 视觉组件库
+ * ------------------------------------------------------------------
+ */
+
+const AmbientBackground = () => (
+  <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-slate-950">
+    <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-blue-900/20 rounded-full blur-[120px] animate-blob mix-blend-screen" />
+    <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-900/20 rounded-full blur-[100px] animate-blob animation-delay-2000 mix-blend-screen" />
+    <div className="absolute bottom-[-20%] left-[20%] w-[40vw] h-[40vw] bg-indigo-900/20 rounded-full blur-[120px] animate-blob animation-delay-4000 mix-blend-screen" />
+    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
+  </div>
+);
+
+const ScrollReveal = ({ children, className = "", delay = 0 }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setIsVisible(true);
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => ref.current && observer.unobserve(ref.current);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-1000 ease-out transform ${
+        isVisible ? "opacity-100 translate-y-0 filter-none" : "opacity-0 translate-y-12 blur-lg"
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+const GlassCard = ({ children, className = "", hoverEffect = true, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`relative overflow-hidden bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-6 text-white shadow-xl 
+    ${hoverEffect ? "hover:bg-white/10 hover:border-white/20 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer" : ""} ${className}`}
+  >
+    {children}
+  </div>
+);
+
+/**
+ * ------------------------------------------------------------------
+ * 页面主逻辑
+ * ------------------------------------------------------------------
+ */
+const App = () => {
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      setScrollProgress(totalScroll / windowHeight);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleCardClick = (url) => {
+    window.open(url, '_blank');
+  };
+
+  return (
+    <div className="min-h-screen font-sans text-slate-100 selection:bg-cyan-500 selection:text-white">
+      <AmbientBackground />
+      
+      {/* 顶部进度条 */}
+      <div className="fixed top-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400 z-50 transition-all duration-100" style={{ width: `${scrollProgress * 100}%` }} />
+
+      {/* 导航栏 */}
+      <nav className="fixed top-0 w-full z-40 px-6 py-4 flex justify-between items-center mix-blend-difference">
+        <div className="text-2xl font-bold tracking-tighter flex items-center gap-2">
+          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+          V-INSIGHT <span className="font-light opacity-60">2026</span>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex flex-col justify-center items-center px-4 pt-20">
+        <div className="relative z-10 text-center max-w-4xl space-y-8">
+          <ScrollReveal delay={100}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-cyan-300 text-sm mb-4">
+              <ShieldCheck size={16} />
+              <span>数据驱动 · 品牌共鸣 · 竞品博弈</span>
+            </div>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={300}>
+            <h1 className="text-6xl md:text-8xl font-bold tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/40">
+              重构<span className="text-blue-500">高端</span>心智<br />
+              <span className="text-cyan-400 italic font-serif px-2">vivo</span> 市场全景调研
+            </h1>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={500}>
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              在存量内卷的手机市场，vivo不只在卖硬件，<br/>
+              而是在构建一个连接科技与温度的生态。
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal delay={700}>
+            <div className="animate-bounce mt-12 opacity-50 flex flex-col items-center">
+              <span className="text-[10px] uppercase tracking-widest mb-2">Explore Deep Dive</span>
+              <ArrowDown size={32} />
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      <main className="relative z-10 space-y-32 pb-32">
+        
+        {/* 第一部分：市场大盘 (包含折线图与来源) */}
+        <section className="container mx-auto px-6">
+          <div className="flex flex-col lg:flex-row gap-12">
+            <div className="lg:w-1/3">
+              <ScrollReveal>
+                <h2 className="text-4xl font-bold mb-4 flex items-center gap-3">
+                  <BarChart className="text-blue-400" /> 市场大盘趋势
+                </h2>
+                <p className="text-slate-400 leading-relaxed mb-8">
+                  国内市场经历三年下行后呈现微弱回暖态势。随着 AI 手机概念的爆发，
+                  高端换机潮正成为各大厂商争夺的“最后一块蛋糕”。
+                </p>
+                <div className="space-y-4">
+                   {MARKET_DATA.trends.map((t, i) => (
+                     <GlassCard key={i} className="py-4" hoverEffect={false}>
+                       <div className="flex items-center gap-4">
+                         <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">{t.icon}</div>
+                         <div>
+                           <div className="font-bold text-white">{t.title}</div>
+                           <div className="text-xs text-slate-400">{t.desc}</div>
+                         </div>
+                       </div>
+                     </GlassCard>
+                   ))}
+                </div>
+              </ScrollReveal>
+            </div>
+            
+            <div className="lg:w-2/3">
+              <ScrollReveal delay={200}>
+                <GlassCard className="h-full bg-gradient-to-br from-white/5 to-slate-900/50">
+                  <div className="flex justify-between items-start mb-8">
+                    <div>
+                      <h3 className="text-xl font-bold">国内手机出货量走势 (2021-2024E)</h3>
+                      <p className="text-xs text-slate-500 mt-1">单位：亿部 (Annual Shipments)</p>
+                    </div>
+                    <div className="text-right">
+                       <div className="inline-block px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full text-[10px] font-mono">
+                         SOURCE: IDC / CANALYS 2024 REPORT
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* 复合可视化：柱状图 + 折线图 */}
+                  <div className="relative h-64 w-full flex items-end justify-between px-10">
+                    {/* 背景网格线 */}
+                    <div className="absolute inset-0 flex flex-col justify-between opacity-5">
+                      {[1,2,3,4].map(i => <div key={i} className="w-full border-t border-white" />)}
+                    </div>
+                    
+                    {/* 折线图路径 SVG */}
+                    <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none px-10 overflow-visible" preserveAspectRatio="none">
+                       <polyline
+                          fill="none"
+                          stroke="#22d3ee"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          points={MARKET_DATA.size.map((d, i) => {
+                            const x = (i / (MARKET_DATA.size.length - 1)) * 100;
+                            const y = 100 - (d.value / 3.5) * 100;
+                            return `${x}% ${y}%`;
+                          }).join(', ')}
+                          className="drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                       />
+                       {/* 折线点 */}
+                       {MARKET_DATA.size.map((d, i) => (
+                         <circle 
+                           key={i} 
+                           cx={`${(i / (MARKET_DATA.size.length - 1)) * 100}%`} 
+                           cy={`${100 - (d.value / 3.5) * 100}%`} 
+                           r="4" 
+                           fill="#fff" 
+                         />
+                       ))}
+                    </svg>
+
+                    {/* 柱状图部分 */}
+                    {MARKET_DATA.size.map((d, i) => (
+                      <div key={i} className="flex-1 flex flex-col justify-end items-center gap-4 group z-0">
+                        <div 
+                          className="w-16 bg-white/5 border border-white/10 rounded-t-xl group-hover:bg-blue-500/20 transition-all duration-500 relative" 
+                          style={{ height: `${(d.value / 3.5) * 100}%` }}
+                        >
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-xs font-bold text-cyan-400">
+                             {d.value}亿
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs font-bold text-slate-200">{d.year}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-white/5 text-[11px] text-slate-500 italic">
+                    *注：2024E 基于各大调研机构上半年出货增势预测，市场回暖受折叠屏及 AI 手机驱动明显。
+                  </div>
+                </GlassCard>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        {/* 第二部分：竞争格局 (深度结合微信文章对比) */}
+        <section className="container mx-auto px-6">
+          <ScrollReveal>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-4">竞争格局：差异化突围</h2>
+              <p className="text-slate-400 max-w-2xl mx-auto">
+                基于 2024-2025 手机市场竞争动态分析，vivo 需在“品牌势能”与“技术生态”间寻求差异化占位。
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {MARKET_DATA.competitors.map((comp, idx) => (
+              <ScrollReveal key={idx} delay={idx * 100}>
+                <GlassCard className="h-full flex flex-col group border-b-4 border-transparent hover:border-b-blue-500">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-black italic tracking-tighter">{comp.name}</h3>
+                    <div className={`w-3 h-3 rounded-full ${comp.color} shadow-[0_0_10px_currentColor]`} />
+                  </div>
+                  
+                  <div className="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded w-fit mb-4">
+                    {comp.tag}
+                  </div>
+                  
+                  <p className="text-slate-300 text-sm leading-relaxed flex-grow">
+                    {comp.strategy}
+                  </p>
+                  
+                  <div className="mt-8">
+                    <div className="flex justify-between text-[10px] text-slate-500 mb-1 uppercase tracking-widest">
+                      <span>Brand Momentum</span>
+                      <span>{comp.power}%</span>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${comp.color} transition-all duration-1000 delay-500`} 
+                        style={{ width: `${comp.power}%` }} 
+                      />
+                    </div>
+                  </div>
+                </GlassCard>
+              </ScrollReveal>
+            ))}
+          </div>
+
+          <ScrollReveal delay={400}>
+            <div className="mt-8 p-6 bg-blue-500/5 rounded-3xl border border-blue-500/20 flex flex-col md:flex-row items-center gap-6">
+              <div className="p-4 bg-blue-500 rounded-2xl text-black">
+                <Target size={24} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-lg">核心结论：vivo 的生存哲学</h4>
+                <p className="text-slate-400 text-sm">
+                  面对华为的回归和小米的汽车生态，vivo 应坚持本心，通过蓝晶芯片技术栈深度绑定底层性能，
+                  并利用蓝图影像在人像领域维持绝对统治力。不求全生态扩张，但求在单点场景做到极致。
+                </p>
+              </div>
+            </div>
+          </ScrollReveal>
+        </section>
+
+        {/* 第三部分：品牌传播 & 市场洞察案例 */}
+        <section className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-6">
+             <ScrollReveal>
+                <h2 className="text-4xl font-bold flex items-center gap-3">
+                  <Globe className="text-cyan-400" /> 传播视角：数英网深度案例
+                </h2>
+                <p className="text-slate-400 mt-2 max-w-2xl">
+                  分析行业现象级营销，从竞品和趋势中反哺 vivo 的品牌表达策略。
+                </p>
+             </ScrollReveal>
+             <ScrollReveal delay={200}>
+               <div className="text-xs text-slate-500 border border-white/10 px-3 py-1 rounded-full animate-pulse">
+                 Click to view full case study on Digitaling
+               </div>
+             </ScrollReveal>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {BRAND_CASES.map((item, idx) => (
+              <ScrollReveal key={idx} delay={idx * 150}>
+                <GlassCard 
+                  onClick={() => handleCardClick(item.link)}
+                  className="h-full flex flex-col group border-l-0 hover:border-l-4 hover:border-l-cyan-400 transition-all duration-500"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-4 rounded-2xl ${item.type === 'own' ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-white/10 text-slate-400'}`}>
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold group-hover:text-cyan-300 transition-colors">{item.title}</h3>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest">{item.category}</div>
+                      </div>
+                    </div>
+                    <ExternalLink size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+                  </div>
+                  
+                  <div className="bg-black/20 p-4 rounded-2xl mb-6">
+                    <p className="text-slate-300 text-sm leading-relaxed italic">
+                      "{item.insight}"
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-auto">
+                    <span className="text-[10px] font-bold px-2 py-1 bg-white/5 rounded text-slate-400 uppercase tracking-tighter">
+                      Category: {item.brand}
+                    </span>
+                    <div className="flex items-center gap-1 text-cyan-400 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                      View Detail <ArrowRight size={14} />
+                    </div>
+                  </div>
+                </GlassCard>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+
+        {/* 第四部分：用户画像 */}
+        <section className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {MARKET_DATA.personas.map((persona, index) => (
+              <ScrollReveal key={index} delay={index * 200}>
+                <GlassCard className="h-full group">
+                  <div className={`w-12 h-12 rounded-xl mb-6 bg-gradient-to-br ${persona.color} flex items-center justify-center text-black font-bold shadow-lg`}>
+                    0{index + 1}
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">{persona.title}</h3>
+                  <span className="inline-block px-2 py-1 bg-white/10 rounded text-xs text-cyan-300 mb-4 tracking-wider uppercase font-mono">
+                    {persona.tag}
+                  </span>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    {persona.desc}
+                  </p>
+                </GlassCard>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 py-20 relative z-10 bg-black/50 backdrop-blur-xl">
+        <div className="container mx-auto px-6 text-center">
+          <div className="text-slate-500 text-sm mb-4">DESIGNED FOR VIVO STRATEGY INTERVIEW · 2026</div>
+          <div className="text-2xl font-black tracking-tighter text-white opacity-20">BENFEN & INNOVATION</div>
+        </div>
+      </footer>
+      
+      <style>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob { animation: blob 10s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+        
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+      `}</style>
+    </div>
+  );
+};
+
+export default App;
